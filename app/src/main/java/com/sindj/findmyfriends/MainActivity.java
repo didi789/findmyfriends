@@ -21,6 +21,8 @@ import com.google.firebase.database.ValueEventListener;
 
 public class MainActivity extends AppCompatActivity {
 
+    String groupKey;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
 
         alert.setPositiveButton("JOIN", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
-                final String groupKey = edittext.getText().toString();
+                groupKey = edittext.getText().toString();
                 FirebaseDatabase database = FirebaseDatabase.getInstance();
                 DatabaseReference groupKeyRef = database.getReference("groups-keys").child(groupKey);
                 groupKeyRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -129,6 +131,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void logout(View view) {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference groupsRef = database.getReference("groups");
+
+        groupsRef.child(groupKey).child("locations/" +SharedPref.getString("userKey", null)).setValue(null);
         SharedPref.putString("nickname", null);
         SharedPref.putString("userKey", null);
         Intent intent = new Intent(MainActivity.this, NameActivity.class);

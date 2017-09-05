@@ -17,6 +17,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -32,6 +33,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.sindj.findmyfriends.chat.ChatActivity;
 
 import java.util.ArrayList;
 
@@ -40,6 +42,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
     String key = "";
     String userKey = "";
     String nickName = "";
+    String groupName = "";
     private userLocation myLocation = new userLocation();
     DatabaseReference groupRef;
     DatabaseReference locationsRef;
@@ -57,8 +60,10 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         setContentView(R.layout.activity_map);
 
         Intent intent = getIntent();
-        String groupName = intent.getStringExtra("name");
+        groupName = intent.getStringExtra("name");
         nickName = SharedPref.getString("nickname", null);
+        Button b = (Button) findViewById(R.id.groupname);
+        b.setText(groupName);
         setTitle(groupName);
         key = intent.getStringExtra("key");
 
@@ -78,6 +83,15 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
             Sensor s = sm.getSensorList(Sensor.TYPE_ROTATION_VECTOR).get(0);
             sm.registerListener(this, s, SensorManager.SENSOR_DELAY_NORMAL);
         }
+    }
+
+    public void chat(View view) {
+        Intent intent = new Intent(this, ChatActivity.class);
+        intent.putExtra("groupKey", key);
+        intent.putExtra("userKey", userKey);
+        intent.putExtra("userName", nickName);
+        intent.putExtra("groupName", groupName);
+        startActivity(intent);
     }
 
     private class LocationListener implements android.location.LocationListener {
@@ -124,6 +138,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
 
     @Override
     public void onSensorChanged(SensorEvent event) {
+        /*
         if (event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
             SensorManager.getRotationMatrixFromVector(
                     mRotationMatrix, event.values);
@@ -131,7 +146,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
             SensorManager.getOrientation(mRotationMatrix, orientation);
             double bearing = Math.toDegrees(orientation[0]) + mDeclination;
             updateCamera((float) bearing);
-        }
+        }*/
     }
 
     @Override
@@ -179,42 +194,12 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         }
     }
 
-    // Define a listener that responds to location updates
-/*    LocationListener locationListener = new LocationListener() {
-        public void onLocationChanged(Location location) {
-            // Called when a new location is found by the network location provider.
-
-            DatabaseReference locRef = groupRef.child("locations/" + userKey);
-            myLocation.setLatitude(location.getLatitude());
-            myLocation.setLongitude(location.getLongitude());
-            locRef.setValue(myLocation);
-        }
-
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-        }
-
-        public void onProviderEnabled(String provider) {
-        }
-
-        public void onProviderDisabled(String provider) {
-        }
-    };*/
-
-// Register the listener with the Location Manager to receive location updates
-    //    if(ActivityCompat.checkSelfPermission(this,android.Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED &&ActivityCompat.checkSelfPermission(this,android.Manifest.permission.ACCESS_COARSE_LOCATION)!=PackageManager.PERMISSION_GRANTED)
-    // {
-    //     return;
-    // }
-    //  locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-    // locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,1000,0,locationListener);
-
     public void copyToClipboard(View view) {
         Toast.makeText(this, "The key has been copied into your clipboard", Toast.LENGTH_SHORT).show();
 
         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText("FMF group pass", key);
         clipboard.setPrimaryClip(clip);
-
     }
 
     @Override
@@ -224,11 +209,6 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
             return;
         }
         mMap.setMyLocationEnabled(true);
-        // Add a marker in Sydney and move the camera
-        // LatLng sydney = new LatLng(-34, 151);
-        //  Marker marker = mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        // marker.remove();
-        // mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
 
         locationsRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -247,7 +227,6 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
                         Marker marker = mMap.addMarker(new MarkerOptions().position(latlngLoc).title(userLocation.getName()));
                         arrMarkers.add(marker);
                     }
-                    // Toast.makeText(MapActivity.this, userLocation.toString(), Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -274,8 +253,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
             }
             if (l.getAccuracy() >= mLastLocation.getAccuracy()
                     && l.distanceTo(mLastLocation) < l.getAccuracy()) {
-                Log.d("",
-                        "Accuracy got worse and we are still within the accuracy range.. Not updating");
+                Log.d("", "Accuracy got worse and we are still within the accuracy range.. Not updating");
                 return;
             }
         }
