@@ -62,6 +62,7 @@ public class NameActivity extends AppCompatActivity {
                 intent.putExtra("nickname", nickname);
                 SharedPref.putString("nickname", nickname);
                 startActivity(intent);
+                finish();
             }
         }
     }

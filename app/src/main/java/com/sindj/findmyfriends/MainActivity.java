@@ -130,6 +130,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void logout(View view) {
         SharedPref.putString("nickname", null);
+        SharedPref.putString("userKey", null);
         Intent intent = new Intent(MainActivity.this, NameActivity.class);
         startActivity(intent);
         finish();

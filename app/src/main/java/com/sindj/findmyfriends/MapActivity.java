@@ -15,13 +15,17 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class MapActivity extends AppCompatActivity {
 
     String key = "";
     String userKey = "";
+    private userLocation myLocation = new userLocation();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,14 +39,31 @@ public class MapActivity extends AppCompatActivity {
         key = intent.getStringExtra("key");
 
         final DatabaseReference groupRef = FirebaseDatabase.getInstance().getReference("groups/" + key);
+        final DatabaseReference locationsRef = groupRef.child("locations");
+        locationsRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot snap : dataSnapshot.getChildren()) {
+                    userLocation userLocation = snap.getValue(userLocation.class);
+                    Toast.makeText(MapActivity.this, userLocation.toString(), Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
 
         if (SharedPref.getString("userKey", null) != null) {
             userKey = SharedPref.getString("userKey", null);
         } else {
             userKey = groupRef.child("locations").push().getKey();
-            groupRef.child("locations").child(userKey).child("name").setValue(SharedPref.getString("nickname", null));
+            SharedPref.putString("userKey", userKey);
         }
 
+        groupRef.child("locations").child(userKey).child("name").setValue(SharedPref.getString("nickname", null));
+        myLocation.setName(SharedPref.getString("nickname", null));
         TextView textView = (TextView) findViewById(R.id.groupKey);
         textView.setText("Key: " + key);
 
@@ -55,8 +76,9 @@ public class MapActivity extends AppCompatActivity {
                 // Called when a new location is found by the network location provider.
 
                 DatabaseReference locRef = groupRef.child("locations/" + userKey);
-                locRef.child("location").child("Latitude").setValue(location.getLatitude());
-                locRef.child("location").child("Longitude").setValue(location.getLongitude());
+                myLocation.setLatitude(location.getLatitude());
+                myLocation.setLongitude(location.getLongitude());
+                locRef.child("location").child("Latitude").setValue(myLocation);
             }
 
             public void onStatusChanged(String provider, int status, Bundle extras) {
@@ -75,7 +97,7 @@ public class MapActivity extends AppCompatActivity {
         }
 
         //  locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-      locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000, 0, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000, 0, locationListener);
 
     }
 
